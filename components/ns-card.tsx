@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button'
 import { CopyButton } from '@/components/copy-button'
 import { VoteButton } from '@/components/vote-button'
 import { cn } from '@/lib/utils'
-import { discussionUrl, type NsEntry } from '@/lib/types'
+import type { NsEntry } from '@/lib/types'
 
 type Props = {
   entry: NsEntry
@@ -103,7 +103,7 @@ function CardFront({
         <div className="flex items-center gap-1.5">
           <VoteButton entryId={entry.id} votes={entry.votes} />
           <a
-            href={discussionUrl(entry.discussionNumber)}
+              href={entry.discussionUrl}
             target="_blank"
             rel="noreferrer"
             tabIndex={hidden ? -1 : 0}

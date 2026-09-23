@@ -6,78 +6,113 @@ import {
   useContext,
   useMemo,
   useState,
+  useTransition,
   type ReactNode,
 } from 'react'
-import { seedEntries } from './data'
-import type { Availability, FeedTab, NsEntry } from './types'
+import { createEntry, toggleVote as toggleVoteAction } from '@/app/actions/entries'
+import { authClient } from '@/lib/auth-client'
+import type {
+  CurrentUser,
+  FeedTab,
+  NewSubmission,
+  NsEntry,
+} from './types'
 
-export type NewSubmission = {
-  nameservers: string[]
-  description: string
-  domains: string[]
-  availability: Availability
-}
+export type { NewSubmission }
 
 type StoreValue = {
   entries: NsEntry[]
   votedIds: Set<string>
+  currentUser: CurrentUser | null
+  repo: string
   toggleVote: (id: string) => void
   addEntry: (submission: NewSubmission) => Promise<NsEntry>
   getBySlug: (slug: string) => NsEntry | undefined
   rankOf: (id: string) => number
+  signIn: () => Promise<void>
+  signOut: () => Promise<void>
 }
 
 const StoreContext = createContext<StoreValue | null>(null)
 
-const slugify = (value: string) =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+async function signInWithGitHub() {
+  await authClient.signIn.social({ provider: 'github', callbackURL: '/' })
+}
 
-export function StoreProvider({ children }: { children: ReactNode }) {
-  const [entries, setEntries] = useState<NsEntry[]>(seedEntries)
-  const [votedIds, setVotedIds] = useState<Set<string>>(new Set())
+export function StoreProvider({
+  children,
+  initialEntries,
+  initialVotedIds,
+  currentUser,
+  repo,
+}: {
+  children: ReactNode
+  initialEntries: NsEntry[]
+  initialVotedIds: string[]
+  currentUser: CurrentUser | null
+  repo: string
+}) {
+  const [entries, setEntries] = useState<NsEntry[]>(initialEntries)
+  const [votedIds, setVotedIds] = useState<Set<string>>(
+    () => new Set(initialVotedIds),
+  )
+  const [, startTransition] = useTransition()
 
-  const toggleVote = useCallback((id: string) => {
-    setVotedIds((prev) => {
-      const next = new Set(prev)
-      const hasVoted = next.has(id)
-      if (hasVoted) next.delete(id)
-      else next.add(id)
-      setEntries((list) =>
-        list.map((entry) =>
-          entry.id === id
-            ? { ...entry, votes: entry.votes + (hasVoted ? -1 : 1) }
-            : entry,
-        ),
-      )
-      return next
-    })
-  }, [])
+  const toggleVote = useCallback(
+    (id: string) => {
+      if (!currentUser) {
+        void signInWithGitHub()
+        return
+      }
+      // Optimistic flip; reconcile with the server's authoritative count.
+      setVotedIds((prev) => {
+        const next = new Set(prev)
+        const hadVoted = next.has(id)
+        if (hadVoted) next.delete(id)
+        else next.add(id)
+        setEntries((list) =>
+          list.map((entry) =>
+            entry.id === id
+              ? { ...entry, votes: entry.votes + (hadVoted ? -1 : 1) }
+              : entry,
+          ),
+        )
+        return next
+      })
+
+      startTransition(async () => {
+        try {
+          const { voted, votes } = await toggleVoteAction(id)
+          setVotedIds((prev) => {
+            const next = new Set(prev)
+            if (voted) next.add(id)
+            else next.delete(id)
+            return next
+          })
+          setEntries((list) =>
+            list.map((entry) =>
+              entry.id === id ? { ...entry, votes } : entry,
+            ),
+          )
+        } catch {
+          // Revert on failure.
+          setVotedIds((prev) => {
+            const next = new Set(prev)
+            if (next.has(id)) next.delete(id)
+            else next.add(id)
+            return next
+          })
+        }
+      })
+    },
+    [currentUser],
+  )
 
   const addEntry = useCallback(async (submission: NewSubmission) => {
-    // Simulates verification + discussion creation latency until the backend is wired.
-    await new Promise((resolve) => setTimeout(resolve, 1400))
-    const maxDiscussion = Math.max(...entries.map((e) => e.discussionNumber))
-    const entry: NsEntry = {
-      id: crypto.randomUUID(),
-      slug: slugify(submission.nameservers.join('-')),
-      nameservers: submission.nameservers,
-      description: submission.description,
-      domains: submission.domains,
-      availability: submission.availability,
-      verified: true,
-      votes: 1,
-      comments: 0,
-      discussionNumber: maxDiscussion + 1,
-      owner: { username: 'you', avatarUrl: 'https://github.com/ghost.png' },
-      createdAt: new Date().toISOString(),
-    }
-    setEntries((list) => [entry, ...list])
-    setVotedIds((prev) => new Set(prev).add(entry.id))
+    const entry = await createEntry(submission)
+    setEntries((list) => [entry, ...list.filter((e) => e.id !== entry.id)])
     return entry
-  }, [entries])
+  }, [])
 
   const ranked = useMemo(
     () => [...entries].sort((a, b) => b.votes - a.votes).map((e) => e.id),
@@ -88,12 +123,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     () => ({
       entries,
       votedIds,
+      currentUser,
+      repo,
       toggleVote,
       addEntry,
       getBySlug: (slug) => entries.find((e) => e.slug === slug),
       rankOf: (id) => ranked.indexOf(id) + 1,
+      signIn: signInWithGitHub,
+      signOut: async () => {
+        await authClient.signOut()
+        window.location.reload()
+      },
     }),
-    [entries, votedIds, toggleVote, addEntry, ranked],
+    [entries, votedIds, currentUser, repo, toggleVote, addEntry, ranked],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

@@ -1,8 +1,12 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
+import { headers } from 'next/headers'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { StoreProvider } from '@/lib/store'
+import { auth } from '@/lib/auth'
+import { listEntries } from '@/app/actions/entries'
+import { DISCUSSIONS_REPO } from '@/lib/github'
 import './globals.css'
 
 const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
@@ -40,11 +44,25 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const [{ entries, votedIds }, session] = await Promise.all([
+    listEntries(),
+    auth.api.getSession({ headers: await headers() }),
+  ])
+
+  const currentUser = session?.user
+    ? {
+        id: session.user.id,
+        name: session.user.name,
+        username: session.user.name,
+        avatarUrl: session.user.image ?? '',
+      }
+    : null
+
   return (
     <html
       lang="en"
@@ -52,7 +70,14 @@ export default function RootLayout({
     >
       <body className="min-h-dvh font-sans antialiased">
         <TooltipProvider>
-          <StoreProvider>{children}</StoreProvider>
+          <StoreProvider
+            initialEntries={entries}
+            initialVotedIds={votedIds}
+            currentUser={currentUser}
+            repo={DISCUSSIONS_REPO}
+          >
+            {children}
+          </StoreProvider>
         </TooltipProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

@@ -12,10 +12,9 @@ import { VoteButton } from '@/components/vote-button'
 import { AvailabilityTag, StatusChip } from '@/components/ns-card'
 import { GitHubIcon } from '@/components/github-icon'
 import { useStore } from '@/lib/store'
-import { discussionUrl, DISCUSSIONS_REPO } from '@/lib/types'
 
 export function NsDetail({ slug }: { slug: string }) {
-  const { getBySlug, rankOf } = useStore()
+  const { getBySlug, rankOf, repo } = useStore()
   const [submitOpen, setSubmitOpen] = useState(false)
   const entry = getBySlug(slug)
 
@@ -82,15 +81,13 @@ export function NsDetail({ slug }: { slug: string }) {
                   className="h-10 px-4"
                   nativeButton={false}
                   render={
-                    <a
-                      href={discussionUrl(entry.discussionNumber)}
-                      target="_blank"
-                      rel="noreferrer"
-                    />
+                    <a href={entry.discussionUrl} target="_blank" rel="noreferrer" />
                   }
                 >
                   <GitHubIcon className="size-4" data-icon="inline-start" />
-                  Open Discussion #{entry.discussionNumber} on GitHub
+                  {entry.discussionNumber
+                    ? `Open Discussion #${entry.discussionNumber} on GitHub`
+                    : 'Open Discussions on GitHub'}
                   <ArrowUpRight data-icon="inline-end" />
                 </Button>
               </div>
@@ -122,7 +119,7 @@ export function NsDetail({ slug }: { slug: string }) {
                   nativeButton={false}
                   render={
                     <a
-                      href={discussionUrl(entry.discussionNumber)}
+                      href={entry.discussionUrl}
                       target="_blank"
                       rel="noreferrer"
                     />
@@ -212,7 +209,7 @@ export function NsDetail({ slug }: { slug: string }) {
                   <dl className="mt-3 flex flex-col gap-2 text-sm">
                     <div className="flex items-center justify-between gap-2">
                       <dt className="text-muted-foreground">Repository</dt>
-                      <dd className="truncate font-mono text-xs">{DISCUSSIONS_REPO}</dd>
+                      <dd className="truncate font-mono text-xs">{repo}</dd>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <dt className="text-muted-foreground">Thread</dt>

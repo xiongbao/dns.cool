@@ -15,15 +15,24 @@ export type NsEntry = {
   verified: boolean
   votes: number
   comments: number
-  discussionNumber: number
+  discussionNumber: number | null
+  discussionUrl: string
   owner: Owner
   createdAt: string
 }
 
-export type FeedTab = 'trending' | 'latest' | 'hall-of-fame'
-
-export const DISCUSSIONS_REPO = 'dns-cool/showcase'
-
-export function discussionUrl(number: number) {
-  return `https://github.com/${DISCUSSIONS_REPO}/discussions/${number}`
+export type CurrentUser = {
+  id: string
+  name: string
+  username: string
+  avatarUrl: string
 }
+
+export type NewSubmission = {
+  nameservers: string[]
+  description: string
+  domains: string[]
+  availability: Availability
+}
+
+export type FeedTab = 'trending' | 'latest' | 'hall-of-fame'

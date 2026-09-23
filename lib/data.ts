@@ -3,7 +3,9 @@ import type { NsEntry } from './types'
 const daysAgo = (n: number) =>
   new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString()
 
-export const seedEntries: NsEntry[] = [
+export type SeedEntry = Omit<NsEntry, 'discussionUrl'>
+
+export const seedEntries: SeedEntry[] = [
   {
     id: '1',
     slug: 'dns-dog-dns-cat',

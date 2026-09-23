@@ -19,7 +19,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { TagInput } from '@/components/tag-input'
 import { GitHubIcon } from '@/components/github-icon'
 import { useStore } from '@/lib/store'
-import { DISCUSSIONS_REPO } from '@/lib/types'
 
 const HOSTNAME_RE =
   /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i
@@ -31,7 +30,7 @@ type Props = {
 
 export function SubmitDialog({ open, onOpenChange }: Props) {
   const router = useRouter()
-  const { addEntry } = useStore()
+  const { addEntry, currentUser, repo, signIn } = useStore()
   const [nameservers, setNameservers] = useState(['', ''])
   const [description, setDescription] = useState('')
   const [domains, setDomains] = useState<string[]>([])
@@ -53,6 +52,10 @@ export function SubmitDialog({ open, onOpenChange }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!currentUser) {
+      void signIn()
+      return
+    }
     const cleaned = nameservers.map((ns) => ns.trim().toLowerCase()).filter(Boolean)
     if (cleaned.length < 2) {
       setError('Add at least two nameservers.')
@@ -203,7 +206,7 @@ export function SubmitDialog({ open, onOpenChange }: Props) {
             <GitHubIcon className="mt-0.5 size-4 shrink-0" />
             <p className="text-xs leading-relaxed">
               Publishing will automatically create a paired thread in{' '}
-              <span className="font-mono">{DISCUSSIONS_REPO}</span> GitHub
+                <span className="font-mono">{repo}</span> GitHub
               Discussions to track discussions &amp; access requests.
             </p>
           </div>
