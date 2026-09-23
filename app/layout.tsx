@@ -3,10 +3,14 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { headers } from 'next/headers'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { eq } from 'drizzle-orm'
 import { StoreProvider } from '@/lib/store'
 import { auth } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { user as userTable } from '@/lib/db/schema'
 import { listEntries } from '@/app/actions/entries'
 import { DISCUSSIONS_REPO } from '@/lib/github'
+import type { UserRole } from '@/lib/types'
 import './globals.css'
 
 const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
@@ -54,14 +58,21 @@ export default async function RootLayout({
     auth.api.getSession({ headers: await headers() }),
   ])
 
-  const currentUser = session?.user
-    ? {
-        id: session.user.id,
-        name: session.user.name,
-        username: session.user.name,
-        avatarUrl: session.user.image ?? '',
-      }
-    : null
+  let currentUser = null
+  if (session?.user) {
+    const [row] = await db
+      .select({ role: userTable.role })
+      .from(userTable)
+      .where(eq(userTable.id, session.user.id))
+      .limit(1)
+    currentUser = {
+      id: session.user.id,
+      name: session.user.name,
+      username: session.user.name,
+      avatarUrl: session.user.image ?? '',
+      role: (row?.role === 'admin' ? 'admin' : 'user') as UserRole,
+    }
+  }
 
   return (
     <html

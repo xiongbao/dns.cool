@@ -1,11 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { Flame, LogOut, Plus, Search } from 'lucide-react'
+import { Flame, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { GitHubIcon } from '@/components/github-icon'
+import { UserMenu } from '@/components/user-menu'
 import { useStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 import type { FeedTab } from '@/lib/types'
@@ -32,7 +31,6 @@ export function SiteHeader({
   onSubmit,
 }: Props) {
   const showFeedControls = Boolean(onTabChange)
-  const { currentUser, signIn, signOut } = useStore()
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-md">
@@ -100,34 +98,7 @@ export function SiteHeader({
             <Plus data-icon="inline-start" />
             Submit NS
           </Button>
-          {currentUser ? (
-            <div className="flex items-center gap-1.5">
-              <Avatar size="sm">
-                <AvatarImage src={currentUser.avatarUrl} alt="" />
-                <AvatarFallback>
-                  {currentUser.name.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                aria-label="Sign out"
-                onClick={() => void signOut()}
-              >
-                <LogOut />
-              </Button>
-            </div>
-          ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              aria-label="Sign in with GitHub"
-              onClick={() => void signIn()}
-            >
-              <GitHubIcon className="size-4" />
-              <span className="hidden lg:inline">Sign in</span>
-            </Button>
-          )}
+          <UserMenu />
         </div>
       </div>
 
