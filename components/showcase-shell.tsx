@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
 import { ShowcaseFeed } from '@/components/showcase-feed'
 import { SubmitDialog } from '@/components/submit-dialog'
+import { RoleSwitcher } from '@/components/role-switcher'
 import type { FeedTab } from '@/lib/types'
 
 export function ShowcaseShell() {
@@ -28,6 +29,7 @@ export function ShowcaseShell() {
         <ShowcaseFeed tab={tab} query={query} />
       </main>
       <SubmitDialog open={submitOpen} onOpenChange={setSubmitOpen} />
+      <RoleSwitcher />
     </div>
   )
 }

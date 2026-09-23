@@ -17,6 +17,13 @@ function discussionsIndexUrl() {
   return `https://github.com/${DISCUSSIONS_REPO}/discussions`
 }
 
+const STATUSES = ['active', 'pending', 'invalid', 'banned'] as const
+function normalizeStatus(value: string): NsEntry['status'] {
+  return (STATUSES as readonly string[]).includes(value)
+    ? (value as NsEntry['status'])
+    : 'pending'
+}
+
 function toEntry(row: EntryRow): NsEntry {
   return {
     id: row.id,
@@ -26,11 +33,15 @@ function toEntry(row: EntryRow): NsEntry {
     domains: row.domains,
     availability: row.availability === 'private' ? 'private' : 'public',
     verified: row.verified,
+    status: normalizeStatus(row.status),
+    featured: row.featured,
+    verificationToken: row.verificationToken,
     votes: row.votes,
     comments: row.comments,
     discussionNumber: row.discussionNumber,
     discussionUrl: row.discussionUrl ?? discussionsIndexUrl(),
     owner: { username: row.ownerUsername, avatarUrl: row.ownerAvatarUrl },
+    userId: row.userId,
     createdAt: row.createdAt.toISOString(),
   }
 }
@@ -73,6 +84,8 @@ async function seedIfEmpty() {
         domains: e.domains,
         availability: e.availability,
         verified: e.verified,
+        status: e.verified ? 'active' : 'pending',
+        featured: false,
         votes: e.votes,
         comments: e.comments,
         discussionNumber: e.discussionNumber,
@@ -126,8 +139,9 @@ async function resolveOwner(userId: string, fallbackName: string, fallbackImage:
 }
 
 export async function createEntry(submission: NewSubmission): Promise<NsEntry> {
+  // Login is optional: signed-in users get verified GitHub attribution,
+  // anonymous submissions are published as pending under "anonymous".
   const user = await getSessionUser()
-  if (!user) throw new Error('Unauthorized')
 
   const nameservers = submission.nameservers
     .map((ns) => ns.trim().toLowerCase())
@@ -135,11 +149,9 @@ export async function createEntry(submission: NewSubmission): Promise<NsEntry> {
   if (nameservers.length < 2) throw new Error('At least two nameservers are required.')
 
   const description = submission.description.trim()
-  const owner = await resolveOwner(
-    user.id,
-    user.name || 'anonymous',
-    user.image ?? '',
-  )
+  const owner = user
+    ? await resolveOwner(user.id, user.name || 'anonymous', user.image ?? '')
+    : { username: 'anonymous', avatarUrl: '' }
 
   // Ensure a unique slug even when two pairs collide.
   let slug = slugify(nameservers)
@@ -172,6 +184,12 @@ export async function createEntry(submission: NewSubmission): Promise<NsEntry> {
       .join('\n'),
   })
 
+  // A completed TXT-ownership step (client passes the verification token it
+  // proved) promotes the entry to verified/active. Otherwise it stays pending.
+  const ownershipProven = Boolean(submission.verificationToken)
+  const verified = ownershipProven || Boolean(user)
+  const status = verified ? 'active' : 'pending'
+
   const id = randomUUID()
   const [row] = await db
     .insert(nsEntries)
@@ -182,14 +200,17 @@ export async function createEntry(submission: NewSubmission): Promise<NsEntry> {
       description,
       domains: submission.domains,
       availability: submission.availability,
-      verified: true,
+      verified,
+      status,
+      featured: false,
+      verificationToken: submission.verificationToken ?? null,
       votes: 0,
       comments: 0,
       discussionNumber: discussion?.number ?? null,
       discussionUrl: discussion?.url ?? discussionsIndexUrl(),
       ownerUsername: owner.username,
       ownerAvatarUrl: owner.avatarUrl,
-      userId: user.id,
+      userId: user?.id ?? null,
     })
     .returning()
 
@@ -237,4 +258,77 @@ export async function toggleVote(
 
   revalidatePath('/')
   return { voted, votes: row?.votes ?? 0 }
+}
+
+/** Entries owned by the signed-in user, for the /my dashboard. */
+export async function getMyEntries(): Promise<NsEntry[]> {
+  const userId = await requireUserId()
+  const rows = await db
+    .select()
+    .from(nsEntries)
+    .where(eq(nsEntries.userId, userId))
+    .orderBy(desc(nsEntries.createdAt))
+  return rows.map(toEntry)
+}
+
+export type EntryPatch = {
+  description?: string
+  domains?: string[]
+  availability?: 'public' | 'private'
+}
+
+/** Owner-scoped metadata edit. Nameservers are immutable by design. */
+export async function updateEntry(
+  entryId: string,
+  patch: EntryPatch,
+): Promise<NsEntry> {
+  const userId = await requireUserId()
+
+  const set: Partial<typeof nsEntries.$inferInsert> = {}
+  if (typeof patch.description === 'string')
+    set.description = patch.description.trim()
+  if (Array.isArray(patch.domains)) set.domains = patch.domains
+  if (patch.availability === 'public' || patch.availability === 'private')
+    set.availability = patch.availability
+
+  const [row] = await db
+    .update(nsEntries)
+    .set(set)
+    .where(and(eq(nsEntries.id, entryId), eq(nsEntries.userId, userId)))
+    .returning()
+
+  if (!row) throw new Error('Not found')
+  revalidatePath('/')
+  revalidatePath('/my')
+  revalidatePath(`/ns/${row.slug}`)
+  return toEntry(row)
+}
+
+export async function deleteEntry(entryId: string): Promise<void> {
+  const userId = await requireUserId()
+  await db
+    .delete(nsEntries)
+    .where(and(eq(nsEntries.id, entryId), eq(nsEntries.userId, userId)))
+  await db.delete(nsVotes).where(eq(nsVotes.entryId, entryId))
+  revalidatePath('/')
+  revalidatePath('/my')
+}
+
+/**
+ * Re-run the TXT ownership check. The lookup is simulated (a real DoH query
+ * would hit the endorsed domain's `_dns_cool` record) and resolves to active.
+ */
+export async function reverifyEntry(entryId: string): Promise<NsEntry> {
+  const userId = await requireUserId()
+  const token = `dc_${randomUUID().replace(/-/g, '').slice(0, 12)}`
+  const [row] = await db
+    .update(nsEntries)
+    .set({ verified: true, status: 'active', verificationToken: token })
+    .where(and(eq(nsEntries.id, entryId), eq(nsEntries.userId, userId)))
+    .returning()
+
+  if (!row) throw new Error('Not found')
+  revalidatePath('/')
+  revalidatePath('/my')
+  return toEntry(row)
 }

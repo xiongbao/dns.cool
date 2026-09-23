@@ -16,6 +16,7 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('emailVerified').notNull().default(false),
   image: text('image'),
+  role: text('role').notNull().default('user'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 })
@@ -70,6 +71,9 @@ export const nsEntries = pgTable('ns_entries', {
   domains: text('domains').array().notNull().default([]),
   availability: text('availability').notNull().default('public'),
   verified: boolean('verified').notNull().default(false),
+  status: text('status').notNull().default('pending'),
+  featured: boolean('featured').notNull().default(false),
+  verificationToken: text('verificationToken'),
   votes: integer('votes').notNull().default(0),
   comments: integer('comments').notNull().default(0),
   discussionNumber: integer('discussionNumber'),

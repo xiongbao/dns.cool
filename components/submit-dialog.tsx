@@ -30,7 +30,7 @@ type Props = {
 
 export function SubmitDialog({ open, onOpenChange }: Props) {
   const router = useRouter()
-  const { addEntry, currentUser, repo, signIn } = useStore()
+  const { addEntry, repo, findDuplicate } = useStore()
   const [nameservers, setNameservers] = useState(['', ''])
   const [description, setDescription] = useState('')
   const [domains, setDomains] = useState<string[]>([])
@@ -52,10 +52,6 @@ export function SubmitDialog({ open, onOpenChange }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!currentUser) {
-      void signIn()
-      return
-    }
     const cleaned = nameservers.map((ns) => ns.trim().toLowerCase()).filter(Boolean)
     if (cleaned.length < 2) {
       setError('Add at least two nameservers.')
@@ -68,6 +64,11 @@ export function SubmitDialog({ open, onOpenChange }: Props) {
     }
     if (description.trim().length < 8) {
       setError('Give it a short description (8+ characters).')
+      return
+    }
+    const duplicate = findDuplicate(cleaned)
+    if (duplicate) {
+      setError(`This nameserver pair is already listed as "${duplicate.slug}".`)
       return
     }
     setError(null)
