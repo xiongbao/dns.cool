@@ -131,8 +131,14 @@ export function StoreProvider({
       rankOf: (id) => ranked.indexOf(id) + 1,
       signIn: signInWithGitHub,
       signOut: async () => {
-        await authClient.signOut()
-        window.location.reload()
+        try {
+          await authClient.signOut()
+        } catch (err) {
+          console.log('[v0] signOut error:', (err as Error)?.message)
+        }
+        // Force a hard navigation so the server re-reads the (now cleared)
+        // session cookie and the UI reflects the signed-out state.
+        window.location.assign('/')
       },
     }),
     [entries, votedIds, currentUser, repo, toggleVote, addEntry, ranked],

@@ -126,8 +126,9 @@ async function resolveOwner(userId: string, fallbackName: string, fallbackImage:
 }
 
 export async function createEntry(submission: NewSubmission): Promise<NsEntry> {
+  // Login is optional: signed-in users get verified GitHub attribution,
+  // anonymous submissions are published as pending under "anonymous".
   const user = await getSessionUser()
-  if (!user) throw new Error('Unauthorized')
 
   const nameservers = submission.nameservers
     .map((ns) => ns.trim().toLowerCase())
@@ -135,11 +136,9 @@ export async function createEntry(submission: NewSubmission): Promise<NsEntry> {
   if (nameservers.length < 2) throw new Error('At least two nameservers are required.')
 
   const description = submission.description.trim()
-  const owner = await resolveOwner(
-    user.id,
-    user.name || 'anonymous',
-    user.image ?? '',
-  )
+  const owner = user
+    ? await resolveOwner(user.id, user.name || 'anonymous', user.image ?? '')
+    : { username: 'anonymous', avatarUrl: '' }
 
   // Ensure a unique slug even when two pairs collide.
   let slug = slugify(nameservers)
@@ -182,14 +181,14 @@ export async function createEntry(submission: NewSubmission): Promise<NsEntry> {
       description,
       domains: submission.domains,
       availability: submission.availability,
-      verified: true,
+      verified: Boolean(user),
       votes: 0,
       comments: 0,
       discussionNumber: discussion?.number ?? null,
       discussionUrl: discussion?.url ?? discussionsIndexUrl(),
       ownerUsername: owner.username,
       ownerAvatarUrl: owner.avatarUrl,
-      userId: user.id,
+      userId: user?.id ?? null,
     })
     .returning()
 
