@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowUpRight,
@@ -23,31 +23,111 @@ type Props = {
   index?: number
 }
 
+// Maximum tilt in degrees applied at the card edges.
+const MAX_TILT = 9
+
 export function NsCard({ entry, rank, index = 0 }: Props) {
   const [flipped, setFlipped] = useState(false)
-  const flip = () => setFlipped((f) => !f)
+  const flip = useCallback(() => setFlipped((f) => !f), [])
+
+  const tiltRef = useRef<HTMLDivElement>(null)
+  const frameRef = useRef<number | null>(null)
+  const reducedMotion = useRef(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const sync = () => (reducedMotion.current = mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => {
+      mq.removeEventListener('change', sync)
+      if (frameRef.current) cancelAnimationFrame(frameRef.current)
+    }
+  }, [])
+
+  const applyTilt = useCallback((rx: number, ry: number, mx: number, my: number) => {
+    const el = tiltRef.current
+    if (!el) return
+    el.style.setProperty('--rx', `${rx.toFixed(2)}deg`)
+    el.style.setProperty('--ry', `${ry.toFixed(2)}deg`)
+    el.style.setProperty('--mx', `${mx.toFixed(1)}%`)
+    el.style.setProperty('--my', `${my.toFixed(1)}%`)
+  }, [])
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (reducedMotion.current || e.pointerType === 'touch') return
+      const rect = e.currentTarget.getBoundingClientRect()
+      const px = (e.clientX - rect.left) / rect.width
+      const py = (e.clientY - rect.top) / rect.height
+      if (frameRef.current) cancelAnimationFrame(frameRef.current)
+      frameRef.current = requestAnimationFrame(() => {
+        applyTilt(
+          (0.5 - py) * 2 * MAX_TILT,
+          (px - 0.5) * 2 * MAX_TILT,
+          px * 100,
+          py * 100,
+        )
+      })
+    },
+    [applyTilt],
+  )
+
+  const handlePointerEnter = useCallback(() => {
+    tiltRef.current?.style.setProperty('--tilt-lift', '1')
+  }, [])
+
+  const handlePointerLeave = useCallback(() => {
+    if (frameRef.current) cancelAnimationFrame(frameRef.current)
+    tiltRef.current?.style.setProperty('--tilt-lift', '0')
+    applyTilt(0, 0, 50, 50)
+  }, [applyTilt])
 
   return (
     <article
-      className="perspective-1200 h-80 animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500"
+      className="group perspective-1200 h-80 animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500"
       style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
       aria-label={entry.nameservers.join(' and ')}
     >
+      {/* Tilt layer: follows the pointer, composes with the flip layer inside it. */}
       <div
-        className={cn(
-          'transform-3d relative h-full w-full transition-transform duration-600 [transition-timing-function:cubic-bezier(.2,.8,.2,1)]',
-          flipped && 'rotate-y-180',
-        )}
+        ref={tiltRef}
+        onPointerMove={handlePointerMove}
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={handlePointerLeave}
+        className="transform-3d relative h-full w-full [transform:rotateX(var(--rx,0deg))_rotateY(var(--ry,0deg))_scale(calc(1+var(--tilt-lift,0)*0.02))] [transition:transform_140ms_ease-out] will-change-transform"
       >
-        <CardFront entry={entry} rank={rank} onFlip={flip} hidden={flipped} />
-        <CardBack entry={entry} onFlip={flip} hidden={!flipped} />
+        {/* Flip layer */}
+        <div
+          className={cn(
+            'transform-3d relative h-full w-full transition-transform duration-600 [transition-timing-function:cubic-bezier(.2,.8,.2,1)]',
+            flipped && 'rotate-y-180',
+          )}
+        >
+          <CardFront entry={entry} rank={rank} onFlip={flip} hidden={flipped} />
+          <CardBack entry={entry} onFlip={flip} hidden={!flipped} />
+        </div>
       </div>
     </article>
   )
 }
 
 const faceClass =
-  'backface-hidden absolute inset-0 flex flex-col rounded-xl border border-border bg-card text-card-foreground shadow-xs'
+  'backface-hidden absolute inset-0 flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs transition-shadow duration-300 group-hover:shadow-xl group-hover:shadow-primary/5'
+
+// Cursor-following sheen, only rendered on the front face.
+function Glare() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 z-10 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+      style={{
+        background:
+          'radial-gradient(600px circle at var(--mx,50%) var(--my,50%), color-mix(in oklab, var(--primary) 16%, transparent), transparent 42%)',
+      }}
+    />
+  )
+}
 
 function CardFront({
   entry,
@@ -62,6 +142,7 @@ function CardFront({
 }) {
   return (
     <div className={faceClass} aria-hidden={hidden}>
+      <Glare />
       <div className="flex items-center justify-between gap-2 px-4 pt-3.5">
         <div className="flex items-center gap-2">
           <StatusChip verified={entry.verified} />
@@ -103,7 +184,7 @@ function CardFront({
         <div className="flex items-center gap-1.5">
           <VoteButton entryId={entry.id} votes={entry.votes} />
           <a
-              href={entry.discussionUrl}
+            href={entry.discussionUrl}
             target="_blank"
             rel="noreferrer"
             tabIndex={hidden ? -1 : 0}
