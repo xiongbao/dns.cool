@@ -62,10 +62,10 @@ export function UserMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-56 origin-top-right animate-in fade-in zoom-in-95 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-lg ring-1 ring-foreground/5 duration-100"
+          className="absolute right-0 top-full z-50 mt-2 w-56 origin-top-right animate-in fade-in zoom-in-95 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground ring-1 ring-foreground/5 duration-100"
         >
           <div className="flex items-center gap-2.5 px-2.5 py-2">
-            <Avatar size="sm">
+            <Avatar>
               <AvatarImage src={currentUser.avatarUrl} alt="" />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
@@ -83,14 +83,14 @@ export function UserMenu() {
           <MenuLink href="/my" icon={<LayoutGrid className="size-4" />} onSelect={() => setOpen(false)}>
             My submissions
           </MenuLink>
-          <MenuLink
+          {/* <MenuLink
             href={`https://github.com/${currentUser.username}`}
             external
             icon={<User className="size-4" />}
             onSelect={() => setOpen(false)}
           >
             GitHub profile
-          </MenuLink>
+          </MenuLink> */}
           {currentUser.role === 'admin' && (
             <MenuLink
               href="/admin"

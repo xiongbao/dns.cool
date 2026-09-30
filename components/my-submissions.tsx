@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button'
 import { StatusChip, AvailabilityTag } from '@/components/ns-card'
 import { EditEntryDialog } from '@/components/edit-entry-dialog'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { SubmitDialog } from '@/components/submit-dialog'
 import { useStore } from '@/lib/store'
 import type { NsEntry } from '@/lib/types'
 
@@ -23,7 +22,6 @@ export function MySubmissions() {
   const { myEntries, updateEntry, deleteEntry, reverifyEntry } = useStore()
   const [editing, setEditing] = useState<NsEntry | null>(null)
   const [deleting, setDeleting] = useState<NsEntry | null>(null)
-  const [submitOpen, setSubmitOpen] = useState(false)
   const [reverifyingId, setReverifyingId] = useState<string | null>(null)
 
   const totalVotes = myEntries.reduce((sum, e) => sum + e.votes, 0)
@@ -49,7 +47,7 @@ export function MySubmissions() {
             Manage the vanity nameservers you&apos;ve published.
           </p>
         </div>
-        <Button onClick={() => setSubmitOpen(true)}>
+        <Button render={<Link href="/submit" />} nativeButton={false}>
           <Plus data-icon="inline-start" />
           New submission
         </Button>
@@ -67,7 +65,11 @@ export function MySubmissions() {
             <p className="text-sm text-muted-foreground">
               You haven&apos;t published any nameservers yet.
             </p>
-            <Button className="mt-4" onClick={() => setSubmitOpen(true)}>
+            <Button
+              className="mt-4"
+              render={<Link href="/submit" />}
+              nativeButton={false}
+            >
               <Plus data-icon="inline-start" />
               Publish your first NS
             </Button>
@@ -171,7 +173,6 @@ export function MySubmissions() {
           if (deleting) await deleteEntry(deleting.id)
         }}
       />
-      <SubmitDialog open={submitOpen} onOpenChange={setSubmitOpen} />
     </div>
   )
 }

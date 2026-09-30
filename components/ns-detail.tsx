@@ -5,8 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, ArrowUpRight, Globe, MessageSquare } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { SiteHeader } from '@/components/site-header'
-import { SubmitDialog } from '@/components/submit-dialog'
+import { DashboardHeader } from '@/components/dashboard-header'
 import { CopyButton } from '@/components/copy-button'
 import { VoteButton } from '@/components/vote-button'
 import { AvailabilityTag, StatusChip } from '@/components/ns-card'
@@ -15,7 +14,6 @@ import { useStore } from '@/lib/store'
 
 export function NsDetail({ slug }: { slug: string }) {
   const { getBySlug, rankOf, repo } = useStore()
-  const [submitOpen, setSubmitOpen] = useState(false)
   const entry = getBySlug(slug)
 
   return (
@@ -24,7 +22,7 @@ export function NsDetail({ slug }: { slug: string }) {
         aria-hidden="true"
         className="grid-paper pointer-events-none absolute inset-x-0 top-0 -z-10 h-72"
       />
-      <SiteHeader onSubmit={() => setSubmitOpen(true)} />
+      <DashboardHeader />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-8 pb-24 sm:px-6">
         <Link
           href="/"
@@ -96,7 +94,7 @@ export function NsDetail({ slug }: { slug: string }) {
             {entry.availability === 'public' && (
               <aside
                 aria-label="Public access guidance"
-                className="flex flex-col gap-4 rounded-xl border border-open/30 bg-open/6 p-5 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-4 rounded-xl bg-open/6 p-5 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex gap-3">
                   <span
@@ -134,7 +132,7 @@ export function NsDetail({ slug }: { slug: string }) {
             <div className="grid gap-6 md:grid-cols-[1fr_320px]">
               <section
                 aria-labelledby="domains-heading"
-                className="rounded-xl border border-border bg-card p-5"
+                className="rounded-xl bg-card p-5"
               >
                 <div className="flex items-center justify-between">
                   <h2 id="domains-heading" className="flex items-center gap-2 font-medium">
@@ -146,7 +144,7 @@ export function NsDetail({ slug }: { slug: string }) {
                   </span>
                 </div>
                 {entry.domains.length ? (
-                  <ul className="mt-4 divide-y divide-border">
+                  <ul className="mt-4 divide-y divide-muted">
                     {entry.domains.map((domain) => (
                       <li
                         key={domain}
@@ -169,7 +167,7 @@ export function NsDetail({ slug }: { slug: string }) {
               <div className="flex flex-col gap-4">
                 <section
                   aria-labelledby="owner-heading"
-                  className="rounded-xl border border-border bg-card p-5"
+                  className="rounded-xl bg-card p-5"
                 >
                   <h2 id="owner-heading" className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                     Owner
@@ -201,7 +199,7 @@ export function NsDetail({ slug }: { slug: string }) {
 
                 <section
                   aria-labelledby="thread-heading"
-                  className="rounded-xl border border-border bg-card p-5"
+                  className="rounded-xl bg-card p-5"
                 >
                   <h2 id="thread-heading" className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                     Discussion thread
@@ -239,7 +237,6 @@ export function NsDetail({ slug }: { slug: string }) {
           </article>
         )}
       </main>
-      <SubmitDialog open={submitOpen} onOpenChange={setSubmitOpen} />
     </div>
   )
 }

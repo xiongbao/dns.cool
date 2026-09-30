@@ -9,6 +9,7 @@ import {
   Lock,
   MessageSquare,
   RotateCcw,
+  FlipHorizontal2Icon
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -30,6 +31,31 @@ export function NsCard({ entry, rank, index = 0 }: Props) {
   const [flipped, setFlipped] = useState(false)
   const flip = useCallback(() => setFlipped((f) => !f), [])
 
+  // Flip on card click, but never when the click lands on an interactive
+  // control inside the card (link, vote, copy, ...).
+  const handleCardClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if ((e.target as HTMLElement).closest('a, button, input, select, textarea')) {
+        return
+      }
+      flip()
+    },
+    [flip],
+  )
+
+  const handleCardKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      // Only handle keys when the card surface itself has focus, otherwise
+      // inner controls (links, vote, copy) would flip the card too.
+      if (e.target !== e.currentTarget) return
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        flip()
+      }
+    },
+    [flip],
+  )
+
   const tiltRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef<number | null>(null)
   const reducedMotion = useRef(false)
@@ -45,13 +71,11 @@ export function NsCard({ entry, rank, index = 0 }: Props) {
     }
   }, [])
 
-  const applyTilt = useCallback((rx: number, ry: number, mx: number, my: number) => {
+  const applyTilt = useCallback((rx: number, ry: number) => {
     const el = tiltRef.current
     if (!el) return
     el.style.setProperty('--rx', `${rx.toFixed(2)}deg`)
     el.style.setProperty('--ry', `${ry.toFixed(2)}deg`)
-    el.style.setProperty('--mx', `${mx.toFixed(1)}%`)
-    el.style.setProperty('--my', `${my.toFixed(1)}%`)
   }, [])
 
   const handlePointerMove = useCallback(
@@ -62,12 +86,7 @@ export function NsCard({ entry, rank, index = 0 }: Props) {
       const py = (e.clientY - rect.top) / rect.height
       if (frameRef.current) cancelAnimationFrame(frameRef.current)
       frameRef.current = requestAnimationFrame(() => {
-        applyTilt(
-          (0.5 - py) * 2 * MAX_TILT,
-          (px - 0.5) * 2 * MAX_TILT,
-          px * 100,
-          py * 100,
-        )
+        applyTilt((0.5 - py) * 2 * MAX_TILT, (px - 0.5) * 2 * MAX_TILT)
       })
     },
     [applyTilt],
@@ -80,22 +99,28 @@ export function NsCard({ entry, rank, index = 0 }: Props) {
   const handlePointerLeave = useCallback(() => {
     if (frameRef.current) cancelAnimationFrame(frameRef.current)
     tiltRef.current?.style.setProperty('--tilt-lift', '0')
-    applyTilt(0, 0, 50, 50)
+    applyTilt(0, 0)
   }, [applyTilt])
 
   return (
     <article
-      className="group perspective-1200 h-80 animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500"
+      className="group perspective-1200 h-60 animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500"
       style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
       aria-label={entry.nameservers.join(' and ')}
     >
       {/* Tilt layer: follows the pointer, composes with the flip layer inside it. */}
       <div
         ref={tiltRef}
+        role="button"
+        tabIndex={0}
+        aria-pressed={flipped}
+        aria-label="Flip card to see owner and details"
+        onClick={handleCardClick}
+        onKeyDown={handleCardKeyDown}
         onPointerMove={handlePointerMove}
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
-        className="transform-3d relative h-full w-full [transform:rotateX(var(--rx,0deg))_rotateY(var(--ry,0deg))_scale(calc(1+var(--tilt-lift,0)*0.02))] [transition:transform_140ms_ease-out] will-change-transform"
+        className="transform-3d relative h-full w-full cursor-pointer rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [transform:rotateY(var(--ry,0deg))_scale(calc(1+var(--tilt-lift,0)*0.02))] [transition:transform_140ms_ease-out] will-change-transform"
       >
         {/* Flip layer */}
         <div
@@ -104,8 +129,8 @@ export function NsCard({ entry, rank, index = 0 }: Props) {
             flipped && 'rotate-y-180',
           )}
         >
-          <CardFront entry={entry} rank={rank} onFlip={flip} hidden={flipped} />
-          <CardBack entry={entry} onFlip={flip} hidden={!flipped} />
+          <CardFront entry={entry} rank={rank} hidden={flipped} />
+          <CardBack entry={entry} hidden={!flipped} />
         </div>
       </div>
     </article>
@@ -113,36 +138,19 @@ export function NsCard({ entry, rank, index = 0 }: Props) {
 }
 
 const faceClass =
-  'backface-hidden absolute inset-0 flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs transition-shadow duration-300 group-hover:shadow-xl group-hover:shadow-primary/5'
-
-// Cursor-following sheen, only rendered on the front face.
-function Glare() {
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 z-10 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-      style={{
-        background:
-          'radial-gradient(600px circle at var(--mx,50%) var(--my,50%), color-mix(in oklab, var(--primary) 16%, transparent), transparent 42%)',
-      }}
-    />
-  )
-}
+  'backface-hidden absolute inset-0 flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground transition-shadow duration-300 group-hover:shadow-xl group-hover:shadow-primary/5'
 
 function CardFront({
   entry,
   rank,
-  onFlip,
   hidden,
 }: {
   entry: NsEntry
   rank: number
-  onFlip: () => void
   hidden: boolean
 }) {
   return (
     <div className={faceClass} aria-hidden={hidden}>
-      <Glare />
       <div className="flex items-center justify-between gap-2 px-4 pt-3.5">
         <div className="flex items-center gap-2">
           <StatusChip verified={entry.verified} />
@@ -150,25 +158,15 @@ function CardFront({
             #{String(rank).padStart(2, '0')}
           </span>
         </div>
-        <Button
-          size="icon-xs"
-          variant="ghost"
-          onClick={onFlip}
-          tabIndex={hidden ? -1 : 0}
-          aria-label="Flip card to see owner and details"
-        >
-          <RotateCcw />
-        </Button>
       </div>
 
-      <div className="flex flex-1 flex-col justify-center gap-1 px-4">
+      <div className="flex flex-1 flex-col justify-center items-center gap-1 px-4">
         {entry.nameservers.map((ns, i) => (
           <p
             key={ns}
             className={cn(
               'truncate font-mono font-semibold tracking-tight text-balance',
               entry.nameservers.length > 2 ? 'text-lg' : 'text-xl sm:text-2xl',
-              i > 0 && 'text-foreground/70',
             )}
           >
             {ns}
@@ -176,11 +174,11 @@ function CardFront({
         ))}
       </div>
 
-      <p className="truncate px-4 text-sm text-muted-foreground">
+      {/* <p className="truncate px-4 text-sm text-muted-foreground">
         {entry.description}
-      </p>
+      </p> */}
 
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-border px-3 py-2.5">
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-secondary mx-3 py-2.5">
         <div className="flex items-center gap-1.5">
           <VoteButton entryId={entry.id} votes={entry.votes} />
           <a
@@ -195,16 +193,13 @@ function CardFront({
             {entry.comments}
           </a>
         </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={onFlip}
-          tabIndex={hidden ? -1 : 0}
-          className="text-muted-foreground"
+        <span
+          aria-hidden="true"
+          className="inline-flex h-7 shrink-0 items-center gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] font-medium text-muted-foreground transition-colors group-hover:text-foreground"
         >
           Details
-          <RotateCcw data-icon="inline-end" />
-        </Button>
+          <FlipHorizontal2Icon className="size-3.5" />
+        </span>
       </div>
     </div>
   )
@@ -212,11 +207,9 @@ function CardFront({
 
 function CardBack({
   entry,
-  onFlip,
   hidden,
 }: {
   entry: NsEntry
-  onFlip: () => void
   hidden: boolean
 }) {
   const isPublic = entry.availability === 'public'
@@ -238,15 +231,12 @@ function CardBack({
             @{entry.owner.username}
           </span>
         </a>
-        <Button
-          size="icon-xs"
-          variant="ghost"
-          onClick={onFlip}
-          tabIndex={hidden ? -1 : 0}
-          aria-label="Flip card back"
+        <span
+          aria-hidden="true"
+          className="inline-flex size-6 shrink-0 items-center justify-center rounded-[min(var(--radius-md),10px)] text-muted-foreground transition-colors group-hover:text-foreground"
         >
-          <RotateCcw className="-scale-x-100" />
-        </Button>
+          <RotateCcw className="size-3 -scale-x-100" />
+        </span>
       </div>
 
       <div className="flex flex-1 flex-col gap-3 overflow-hidden px-4 pt-3">
@@ -271,7 +261,7 @@ function CardBack({
         <AvailabilityTag isPublic={isPublic} />
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-border px-3 py-2.5">
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-secondary mx-3 py-2.5">
         <CopyButton
           value={entry.nameservers.join('\n')}
           className={hidden ? 'pointer-events-none' : undefined}
@@ -293,12 +283,12 @@ function CardBack({
 
 export function StatusChip({ verified }: { verified: boolean }) {
   return verified ? (
-    <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/8 px-2 py-0.5 text-[11px] font-medium text-primary">
+    <span className="inline-flex items-center gap-1 rounded-full bg-primary/8 px-2 py-0.5 text-[11px] font-medium text-primary">
       <BadgeCheck className="size-3" />
       Verified
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
       <Clock className="size-3" />
       Pending
     </span>

@@ -43,7 +43,7 @@ function Denied({
 }: {
   requires: 'user' | 'admin'
   viewRole: ViewRole
-  onSignIn: () => void
+  onSignIn: (callbackURL?: string) => void
 }) {
   const needsAuth = viewRole === 'guest'
   return (
@@ -66,7 +66,11 @@ function Denied({
           <ArrowLeft data-icon="inline-start" />
           Back to showcase
         </Button>
-        {needsAuth && <Button onClick={onSignIn}>Sign in</Button>}
+        {needsAuth && (
+          <Button onClick={() => onSignIn(window.location.pathname)}>
+            Sign in
+          </Button>
+        )}
       </div>
     </div>
   )

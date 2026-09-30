@@ -77,7 +77,7 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} bg-background`}
+      className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body className="min-h-dvh font-sans antialiased">
         <TooltipProvider>
