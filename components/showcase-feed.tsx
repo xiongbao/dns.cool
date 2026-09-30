@@ -54,7 +54,7 @@ export function ShowcaseFeed() {
       />
 
 
-      <div className="border-t border-border flex flex-col gap-1 py-8 sm:flex-row sm:items-end sm:justify-between">
+      <div className="border-t border-muted flex flex-col gap-1 py-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1
             id="feed-heading"

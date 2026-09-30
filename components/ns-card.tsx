@@ -138,7 +138,7 @@ export function NsCard({ entry, rank, index = 0 }: Props) {
 }
 
 const faceClass =
-  'backface-hidden absolute inset-0 flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground transition-shadow duration-300 group-hover:shadow-xl group-hover:shadow-primary/5'
+  'backface-hidden absolute inset-0 flex flex-col overflow-hidden rounded-xl border border-muted bg-card text-card-foreground transition-shadow duration-300 group-hover:shadow-xl group-hover:shadow-primary/5'
 
 function CardFront({
   entry,
