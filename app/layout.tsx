@@ -17,18 +17,19 @@ const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
 
 export const metadata: Metadata = {
-  title: 'dns.cool — Vanity nameserver showcase',
+  title: 'DNS.Cool — Vanity nameserver showcase',
   description:
     'A community showcase and voting platform for vanity and custom nameservers. Publish your NS pair, collect Cool votes, and open access requests through GitHub Discussions.',
-  generator: 'v0.app',
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
+        url: '/icon.svg',
+        type: 'image/svg+xml',
         media: '(prefers-color-scheme: light)',
       },
       {
-        url: '/icon-dark-32x32.png',
+        url: '/icon.svg',
+        type: 'image/svg+xml',
         media: '(prefers-color-scheme: dark)',
       },
       {
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
         type: 'image/svg+xml',
       },
     ],
-    apple: '/apple-icon.png',
+    apple: '/dnscool.logo.png',
   },
 }
 

@@ -99,9 +99,23 @@ function defaultViewRole(user: CurrentUser | null): ViewRole {
 
 const VIEW_ROLE_KEY = 'dns-cool:view-role'
 
+/** Role preview is a development-only affordance. */
+const IS_DEV = process.env.NODE_ENV !== 'production'
+
+function clearStoredViewRole() {
+  if (typeof window === 'undefined') return
+  window.localStorage.removeItem(VIEW_ROLE_KEY)
+}
+
 function readStoredViewRole(): ViewRole | null {
   if (typeof window === 'undefined') return null
   const raw = window.localStorage.getItem(VIEW_ROLE_KEY)
+  // Drop a preview role that leaked into a production build (e.g. from a
+  // dev session on the same origin).
+  if (!IS_DEV) {
+    if (raw) clearStoredViewRole()
+    return null
+  }
   return raw === 'guest' || raw === 'user' || raw === 'admin' ? raw : null
 }
 
@@ -134,22 +148,29 @@ export function StoreProvider({
     if (stored) setViewRoleState(stored)
   }, [])
 
+  // A previewed role must never survive a session change (sign in / sign out),
+  // otherwise one account would inherit another's preview.
+  useEffect(() => {
+    clearStoredViewRole()
+  }, [currentUser?.id])
+
   const setViewRole = useCallback((role: ViewRole) => {
     setViewRoleState(role)
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(VIEW_ROLE_KEY, role)
-    }
+    if (IS_DEV) window.localStorage.setItem(VIEW_ROLE_KEY, role)
   }, [])
 
   const realUser = currentUser
   const isDemo =
-    !realUser || defaultViewRole(realUser) !== viewRole
+    IS_DEV &&
+    (!realUser || defaultViewRole(realUser) !== viewRole
       ? viewRole !== 'guest'
-      : false
+      : false)
 
   // The user the UI should present. Falls back to a demo persona when the
   // role toggle previews a state the real session doesn't cover.
   const effectiveUser = useMemo<CurrentUser | null>(() => {
+    // No role preview in production: present the real session as-is.
+    if (!IS_DEV) return realUser
     if (viewRole === 'guest') return null
     const wanted: UserRole = viewRole === 'admin' ? 'admin' : 'user'
     if (realUser && (realUser.role === wanted || wanted === 'user')) {
