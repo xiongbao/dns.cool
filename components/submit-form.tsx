@@ -105,7 +105,7 @@ export function SubmitForm() {
                 aria-label={`Nameserver ${i + 1}`}
                 autoComplete="off"
                 spellCheck={false}
-                className="font-mono"
+                className="font-mono rounded-md"
                 required={i < 2}
               />
               {nameservers.length > 2 && (
@@ -145,7 +145,7 @@ export function SubmitForm() {
             onChange={(e) => setDescription(e.target.value.slice(0, 160))}
             placeholder="Symmetrical cat & dog dual-stack NS"
             rows={2}
-            className="resize-none"
+            className="resize-none rounded-md"
           />
           <span className="self-end font-mono text-[11px] text-muted-foreground tabular-nums">
             {description.length}/160
@@ -166,7 +166,7 @@ export function SubmitForm() {
           </p>
         </div>
 
-        <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
+        <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
           <div className="flex flex-col gap-0.5">
             <Label htmlFor="ns-availability" className="cursor-pointer">
               {isPublic ? 'Open for Public Use' : 'Private / Showcase Only'}
@@ -181,15 +181,15 @@ export function SubmitForm() {
             id="ns-availability"
             checked={isPublic}
             onCheckedChange={setIsPublic}
-            className="mt-0.5 data-[checked]:bg-open"
+            className="mt-0.5 data-checked:bg-open"
           />
         </div>
 
-        <div className="flex gap-3 rounded-lg bg-accent px-3 py-2.5 text-accent-foreground">
+        <div className="flex gap-3 rounded-md bg-accent px-3 py-2.5 text-accent-foreground">
           <GitHubIcon className="mt-0.5 size-4 shrink-0" />
           <p className="text-xs leading-relaxed">
             Publishing will automatically create a paired thread in{' '}
-            <span className="font-mono">{repo}</span> GitHub Discussions to
+            <span className="font-mono text-primary">{repo}</span> GitHub Discussions to
             track discussions &amp; access requests.
           </p>
         </div>

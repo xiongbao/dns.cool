@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { MeshGradient } from '@paper-design/shaders-react';
+import { HeroMeshGradient } from '@/components/hero-mesh-gradient'
 
 export function HeroBanner() {
   return (
@@ -24,16 +24,7 @@ export function HeroBanner() {
           className="pointer-events-none absolute right-[-8%] top-[-12%] hidden sm:block h-auto w-2/5 select-none"
         />
 
-        <MeshGradient
-          colors={["#9c99ff", "#ffffff", "#ffffff", "#fa99ff"]}
-          distortion={1}
-          swirl={0.2}
-          grainMixer={0}
-          grainOverlay={0}
-          speed={1}
-          rotation={90}
-          className="pointer-events-none absolute -inset-px -z-10 h-full"
-        />
+        <HeroMeshGradient className="pointer-events-none absolute -inset-px -z-10 h-full" />
       </div>
     </section>
   )

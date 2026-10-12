@@ -46,7 +46,7 @@ export function UserMenu() {
   const initials = currentUser.username.slice(0, 2).toUpperCase()
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative ml-2">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -63,7 +63,7 @@ export function UserMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-56 origin-top-right animate-in fade-in zoom-in-95 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground ring-1 ring-foreground/5 duration-100"
+          className="absolute right-0 top-full z-50 mt-2 w-56 origin-top-right animate-in fade-in zoom-in-95 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-xl shadow-primary/5 duration-100"
         >
           <div className="flex items-center gap-2.5 px-2.5 py-2">
             <Avatar>
