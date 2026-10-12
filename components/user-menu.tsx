@@ -46,7 +46,7 @@ export function UserMenu() {
   const initials = currentUser.username.slice(0, 2).toUpperCase()
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative ml-2">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
