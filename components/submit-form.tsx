@@ -89,7 +89,7 @@ export function SubmitForm() {
 
       <form
         onSubmit={handleSubmit}
-        className="mt-6 flex flex-col gap-6 rounded-xl border border-border bg-card p-5"
+        className="mt-6 flex flex-col gap-6 rounded-xl border border-muted bg-card p-5"
       >
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2 text-sm font-medium">Nameservers</legend>
@@ -128,7 +128,7 @@ export function SubmitForm() {
               type="button"
               size="sm"
               variant="ghost"
-              className="w-fit text-muted-foreground"
+              className="w-fit text-muted-foreground cursor-pointer"
               onClick={() => setNameservers((list) => [...list, ''])}
             >
               <Plus data-icon="inline-start" />

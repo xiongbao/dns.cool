@@ -23,10 +23,6 @@ export function DashboardShell({
 
   return (
     <div className="relative flex min-h-dvh flex-col">
-      <div
-        aria-hidden="true"
-        className="grid-paper pointer-events-none absolute inset-x-0 top-0 -z-10 h-48"
-      />
       <DashboardHeader />
       <main className="flex-1">
         {allowed ? children : <Denied requires={requires} viewRole={viewRole} onSignIn={signIn} />}

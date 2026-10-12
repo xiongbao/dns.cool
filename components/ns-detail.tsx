@@ -18,12 +18,8 @@ export function NsDetail({ slug }: { slug: string }) {
 
   return (
     <div className="relative flex min-h-dvh flex-col">
-      <div
-        aria-hidden="true"
-        className="grid-paper pointer-events-none absolute inset-x-0 top-0 -z-10 h-72"
-      />
       <DashboardHeader />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-8 pb-24 sm:px-6">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pt-8 pb-24 sm:px-6">
         <Link
           href="/"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -83,10 +79,8 @@ export function NsDetail({ slug }: { slug: string }) {
                   }
                 >
                   <GitHubIcon className="size-4" data-icon="inline-start" />
-                  {entry.discussionNumber
-                    ? `Open Discussion #${entry.discussionNumber} on GitHub`
-                    : 'Open Discussions on GitHub'}
-                  <ArrowUpRight data-icon="inline-end" />
+                    Join Discussion
+                    <ArrowUpRight className="max-sm:hidden" data-icon="inline-end" />
                 </Button>
               </div>
             </header>
@@ -103,17 +97,16 @@ export function NsDetail({ slug }: { slug: string }) {
                   />
                   <div>
                     <h2 className="font-medium">
-                      Want to point your domains to this NS?
+                      Want to use this NS for your domains?
                     </h2>
                     <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
-                      Jump into GitHub Discussion #{entry.discussionNumber} to
-                      request authorization or read the connection rules set by
+                      Jump into GitHub Discussion #{entry.discussionNumber} to read the usage guidelines by
                       @{entry.owner.username}.
                     </p>
                   </div>
                 </div>
                 <Button
-                  className="shrink-0 bg-open text-open-foreground hover:bg-open/90"
+                  className="rounded-md shrink-0 bg-open text-open-foreground hover:bg-open/90"
                   nativeButton={false}
                   render={
                     <a
@@ -123,7 +116,7 @@ export function NsDetail({ slug }: { slug: string }) {
                     />
                   }
                 >
-                  Request via GitHub Discussion
+                  Getting Started
                   <ArrowUpRight data-icon="inline-end" />
                 </Button>
               </aside>
@@ -137,7 +130,7 @@ export function NsDetail({ slug }: { slug: string }) {
                 <div className="flex items-center justify-between">
                   <h2 id="domains-heading" className="flex items-center gap-2 font-medium">
                     <Globe className="size-4 text-muted-foreground" />
-                    Powered domains
+                    Using domains
                   </h2>
                   <span className="font-mono text-xs text-muted-foreground tabular-nums">
                     {entry.domains.length}
@@ -148,12 +141,13 @@ export function NsDetail({ slug }: { slug: string }) {
                     {entry.domains.map((domain) => (
                       <li
                         key={domain}
-                        className="flex items-center justify-between gap-3 py-2.5"
+                        className="group/domain flex items-center justify-between gap-3 py-2.5"
                       >
-                        <span className="font-mono text-sm">{domain}</span>
-                        <span className="font-mono text-[11px] text-muted-foreground">
-                          NS → {entry.nameservers[0]}
-                        </span>
+                        <a href={`https://${domain}`} target="_blank" className="font-mono text-sm">{domain}</a>
+                        <a href={`https://tian.hu/${domain}`} target="_blank" className="font-mono text-[11px] flex items-center justify-center text-muted-foreground md:invisible md:group-hover/domain:visible">
+                          <span>whois</span>
+                          <ArrowUpRight className="size-2" />
+                        </a>
                       </li>
                     ))}
                   </ul>
@@ -205,10 +199,6 @@ export function NsDetail({ slug }: { slug: string }) {
                     Discussion thread
                   </h2>
                   <dl className="mt-3 flex flex-col gap-2 text-sm">
-                    <div className="flex items-center justify-between gap-2">
-                      <dt className="text-muted-foreground">Repository</dt>
-                      <dd className="truncate font-mono text-xs">{repo}</dd>
-                    </div>
                     <div className="flex items-center justify-between gap-2">
                       <dt className="text-muted-foreground">Thread</dt>
                       <dd className="font-mono text-xs">#{entry.discussionNumber}</dd>

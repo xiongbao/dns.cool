@@ -37,7 +37,7 @@ export function MySubmissions() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:py-12">
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:py-12">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-balance">
@@ -47,7 +47,7 @@ export function MySubmissions() {
             Manage the vanity nameservers you&apos;ve published.
           </p>
         </div>
-        <Button render={<Link href="/submit" />} nativeButton={false}>
+        <Button render={<Link href="/submit" />} variant="ghost" nativeButton={false}>
           <Plus data-icon="inline-start" />
           New submission
         </Button>
@@ -78,7 +78,7 @@ export function MySubmissions() {
           myEntries.map((entry) => (
             <article
               key={entry.id}
-              className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-3 rounded-xl border border-muted bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -179,7 +179,7 @@ export function MySubmissions() {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-3">
+    <div className="rounded-xl border border-muted bg-card px-4 py-3">
       <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="mt-1 font-mono text-2xl font-semibold tabular-nums">{value}</dd>
     </div>

@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { LayoutGrid, LogOut, Shield, User } from 'lucide-react'
+import { LayoutGrid, LogOut, Shield } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { GitHubIcon } from '@/components/github-icon'
 import { useStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
 export function UserMenu() {
   const { currentUser, signIn, signOut } = useStore()
@@ -31,14 +32,14 @@ export function UserMenu() {
 
   if (!currentUser) {
     return (
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={() => void signIn()}
-        className="inline-flex h-9 items-center gap-2 rounded-md bg-foreground px-3 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
       >
-        <GitHubIcon className="size-4" />
+        <GitHubIcon />
         Sign in
-      </button>
+      </Button>
     )
   }
 

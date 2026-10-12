@@ -145,7 +145,7 @@ function TabRow({
             onClick={() => onTabChange(t.value)}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex h-7 shrink-0 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors',
+              'flex h-7 shrink-0 items-center gap-1 rounded-md px-3 text-sm font-medium transition-colors',
               active
                 ? 'bg-card text-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
@@ -180,7 +180,7 @@ function SearchBox({
         onChange={(e) => onQueryChange(e.target.value)}
         placeholder="Search nameservers…"
         aria-label="Search nameservers"
-        className="h-8 w-full pl-8 font-mono text-xs sm:w-56"
+        className="h-8 w-full pl-8 font-mono text-xs sm:w-56 rounded-md"
       />
     </div>
   )
