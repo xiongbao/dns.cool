@@ -15,6 +15,10 @@ export function RoleSwitcher() {
   const { viewRole, setViewRole, isDemo } = useStore()
   const [collapsed, setCollapsed] = useState(false)
 
+  // Development-only affordance: never render in a production build, even if
+  // some page still references it.
+  if (process.env.NODE_ENV === 'production') return null
+
   return (
     <div className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2">
       <div className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-popover/90 p-2 shadow-lg ring-1 ring-foreground/5 backdrop-blur-md">
