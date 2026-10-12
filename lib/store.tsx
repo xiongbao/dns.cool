@@ -73,14 +73,14 @@ type StoreValue = {
   myEntries: NsEntry[]
   getBySlug: (slug: string) => NsEntry | undefined
   rankOf: (id: string) => number
-  signIn: () => Promise<void>
+  signIn: (callbackURL?: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
 const StoreContext = createContext<StoreValue | null>(null)
 
-async function signInWithGitHub() {
-  await authClient.signIn.social({ provider: 'github', callbackURL: '/' })
+async function signInWithGitHub(callbackURL = '/') {
+  await authClient.signIn.social({ provider: 'github', callbackURL })
 }
 
 /** Sorted, lowercased signature so `ns1+ns2` matches `ns2+ns1`. */

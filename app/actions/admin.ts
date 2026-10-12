@@ -11,7 +11,7 @@ import type { EntryStatus, NsEntry } from '@/lib/types'
 type EntryRow = typeof nsEntries.$inferSelect
 
 function discussionsIndexUrl() {
-  return `https://github.com/${process.env.GITHUB_DISCUSSIONS_REPO ?? 'xiongbao/naive.you'}/discussions`
+  return `https://github.com/${process.env.GITHUB_DISCUSSIONS_REPO ?? 'xiongbao/dns.cool'}/discussions`
 }
 
 const STATUSES: EntryStatus[] = ['active', 'pending', 'invalid', 'banned']

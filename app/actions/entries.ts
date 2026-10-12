@@ -139,9 +139,11 @@ async function resolveOwner(userId: string, fallbackName: string, fallbackImage:
 }
 
 export async function createEntry(submission: NewSubmission): Promise<NsEntry> {
-  // Login is optional: signed-in users get verified GitHub attribution,
-  // anonymous submissions are published as pending under "anonymous".
-  const user = await getSessionUser()
+  // Publishing requires a session: entries are attributed to a GitHub account
+  // and linked to the owner so /my can manage them.
+  const sessionUser = await getSessionUser()
+  if (!sessionUser) throw new Error('Sign in with GitHub to publish an NS.')
+  const user = sessionUser
 
   const nameservers = submission.nameservers
     .map((ns) => ns.trim().toLowerCase())
@@ -149,9 +151,11 @@ export async function createEntry(submission: NewSubmission): Promise<NsEntry> {
   if (nameservers.length < 2) throw new Error('At least two nameservers are required.')
 
   const description = submission.description.trim()
-  const owner = user
-    ? await resolveOwner(user.id, user.name || 'anonymous', user.image ?? '')
-    : { username: 'anonymous', avatarUrl: '' }
+  const owner = await resolveOwner(
+    user.id,
+    user.name || 'anonymous',
+    user.image ?? '',
+  )
 
   // Ensure a unique slug even when two pairs collide.
   let slug = slugify(nameservers)
@@ -186,9 +190,10 @@ export async function createEntry(submission: NewSubmission): Promise<NsEntry> {
 
   // A completed TXT-ownership step (client passes the verification token it
   // proved) promotes the entry to verified/active. Otherwise it stays pending.
-  const ownershipProven = Boolean(submission.verificationToken)
-  const verified = ownershipProven || Boolean(user)
-  const status = verified ? 'active' : 'pending'
+  // Submitters are always signed in, so entries go live immediately; a
+  // completed TXT-ownership proof simply records its token.
+  const verified = true
+  const status = 'active'
 
   const id = randomUUID()
   const [row] = await db
@@ -210,11 +215,12 @@ export async function createEntry(submission: NewSubmission): Promise<NsEntry> {
       discussionUrl: discussion?.url ?? discussionsIndexUrl(),
       ownerUsername: owner.username,
       ownerAvatarUrl: owner.avatarUrl,
-      userId: user?.id ?? null,
+      userId: user.id,
     })
     .returning()
 
   revalidatePath('/')
+  revalidatePath('/my')
   revalidatePath(`/ns/${slug}`)
   return toEntry(row)
 }

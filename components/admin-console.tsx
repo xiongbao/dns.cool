@@ -57,7 +57,7 @@ export function AdminConsole() {
   }, [entries])
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:py-12">
+    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:py-12">
       <header>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">Admin console</h1>
@@ -77,7 +77,7 @@ export function AdminConsole() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search NS, owner, description"
-            className="pl-8"
+            className="pl-8 rounded-sm"
             aria-label="Search entries"
           />
         </div>
@@ -100,8 +100,8 @@ export function AdminConsole() {
         </div>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-border">
-        <table className="w-full min-w-[720px] border-collapse text-sm">
+      <div className="mt-4 overflow-x-auto rounded-md border border-border">
+        <table className="w-full min-w-180 border-collapse text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <th className="px-4 py-2.5 font-medium">Nameservers</th>
@@ -155,7 +155,7 @@ export function AdminConsole() {
                     }
                     aria-label={`Status for ${entry.nameservers.join(' + ')}`}
                     className={cn(
-                      'rounded-md border px-2 py-1 text-xs font-medium capitalize outline-none',
+                      'rounded-sm border px-2 py-1 text-xs font-medium capitalize outline-none',
                       STATUS_STYLES[entry.status],
                     )}
                   >
