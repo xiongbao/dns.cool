@@ -31,7 +31,7 @@ export function NsDetail({ slug }: { slug: string }) {
         {!entry ? (
           <NotFound />
         ) : (
-          <article className="mt-8 flex flex-col gap-10">
+          <article className="mt-8 flex flex-col gap-10 pt-4 border-t border-muted">
             <header className="flex flex-col gap-5">
               <div className="flex flex-wrap items-center gap-2">
                 <StatusChip verified={entry.verified} />
